@@ -1,14 +1,21 @@
- Punto 2: Implementación y Pruebas del Analizador CRUD
 
-## 1. Descripción general
+
+---
+
+# **Punto 1 y 2 — Implementación y Pruebas del Analizador CRUD**
+
+---
+
+## **1. Descripción general**
 
 Se partió de la **gramática `gramatica.g4`**, la cual define las operaciones básicas de un lenguaje CRUD inspirado en SQL (`CREATE`, `INSERT`, `SELECT`, `UPDATE`, `DELETE`).
+
 A partir de esta gramática se generaron las clases auxiliares de ANTLR que implementan el **analizador léxico y sintáctico**.
 Finalmente, se desarrolló un archivo **`Main.java`** que permite ejecutar el analizador de forma interactiva, mostrando el árbol sintáctico tanto en texto como en forma gráfica.
 
 ---
 
-## 2. Ejecución del analizador
+## **2. Ejecución del analizador**
 
 **Windows:**
 
@@ -39,7 +46,7 @@ SALIR
 
 ---
 
-## 3. Casos de prueba sugeridos
+## **3. Casos de prueba sugeridos**
 
 Ingresar los siguientes comandos en la consola del programa (sin incluir `SQL>`):
 
@@ -55,93 +62,114 @@ Cada instrucción produce un árbol sintáctico que demuestra que la gramática 
 
 ---
 
-## 4. Archivos incluidos
+## **4. Archivos incluidos**
 
-* `gramatica.g4`: definición del lenguaje.
-* `Main.java`: implementación del analizador interactivo.
-* `Ejemplos.txt`: casos de prueba.
-* `antlr-4.13.2-complete.jar`: biblioteca requerida por ANTLR.
-* Archivos `.java` y `.class` generados automáticamente por ANTLR.
+* `gramatica.g4`: definición del lenguaje
+* `Main.java`: implementación del analizador interactivo
+* `Ejemplos.txt`: casos de prueba
+* `antlr-4.13.2-complete.jar`: biblioteca requerida por ANTLR
+* Archivos `.java` y `.class` generados automáticamente por ANTLR
 
 ---
 
-## 5. Resultado final
+## **5. Resultado final**
 
 El proyecto permite ejecutar sentencias CRUD y visualizar su análisis sintáctico en formato textual y gráfico, cumpliendo con los requerimientos del Punto 2 del parcial.
 
+---
 
+# **Punto 3 — Analizador Sintáctico Ascendente (Python)**
 
-Punto 3 — Analizador Sintáctico Ascendente (Python)
-1. Gramática original
+---
+
+## **1. Gramática original**
+
+```
 E → E + T | T
 T → T * F | F
 F → ( E ) | id
+```
 
-
-Símbolo inicial: E
-Terminales: id, +, *, (, )
-No terminales: E, T, F
+**Símbolo inicial:** `E`
+**Terminales:** `id`, `+`, `*`, `(`, `)`
+**No terminales:** `E`, `T`, `F`
 
 Esta gramática representa expresiones aritméticas simples con suma, multiplicación y paréntesis.
-Las operaciones tienen la precedencia habitual (* sobre +) y ambas son asociativas a la izquierda.
+Las operaciones tienen la precedencia habitual (`*` sobre `+`) y ambas son asociativas a la izquierda.
 
-2. Transformación a forma LL(1)
+---
+
+## **2. Transformación a forma LL(1)**
 
 Para eliminar la recursión izquierda inmediata, se aplica el patrón:
 
+```
 A → A α | β    ⇒
 A  → β A'
 A' → α A' | ε
+```
 
-Aplicación paso a paso:
+### **Aplicación paso a paso**
 
-Para E:
+**Para E:**
 
+```
 E → E + T | T
 E  → T E'
 E' → + T E' | ε
+```
 
+**Para T:**
 
-Para T:
-
+```
 T → T * F | F
 T  → F T'
 T' → * F T' | ε
+```
 
+**Para F:**
 
-F no tiene recursión izquierda:
-
+```
 F → ( E ) | id
+```
 
-Gramática LL(1) equivalente:
+### **Gramática LL(1) equivalente**
+
+```
 E  → T E'
 E' → + T E' | ε
 T  → F T'
 T' → * F T' | ε
 F  → ( E ) | id
+```
 
-3. Conjuntos FIRST, FOLLOW y de Predicción
+---
 
-FIRST:
+## **3. Conjuntos FIRST, FOLLOW y de Predicción**
 
+**FIRST**
+
+```
 FIRST(E)  = { (, id }
 FIRST(E') = { +, ε }
 FIRST(T)  = { (, id }
 FIRST(T') = { *, ε }
 FIRST(F)  = { (, id }
+```
 
+**FOLLOW**
 
-FOLLOW:
-
+```
 FOLLOW(E)  = { ), $ }
 FOLLOW(E') = { ), $ }
 FOLLOW(T)  = { +, ), $ }
 FOLLOW(T') = { +, ), $ }
 FOLLOW(F)  = { *, +, ), $ }
+```
 
+**Conjuntos de Predicción**
 
-Conjuntos de Predicción:
-
+```
 E  → T E'         ⇒ { (, id }
 E' → + T E'       ⇒ { + }
 E' → ε            ⇒ { ), $ }
@@ -150,59 +178,67 @@ T' → * F T'       ⇒ { * }
 T' → ε            ⇒ { +, ), $ }
 F  → ( E )        ⇒ { ( }
 F  → id           ⇒ { id }
+```
 
-4. Diseño del Analizador Ascendente (Shift–Reduce)
-Objetivo:
+---
+
+## **4. Diseño del Analizador Ascendente (Shift–Reduce)**
+
+### **Objetivo**
 
 Implementar un analizador sintáctico ascendente que trabaje con una pila y reglas de reducción basadas en la gramática original.
 
-Estructura:
+### **Estructura**
 
-Entrada: cadena de tokens (id, +, *, (, ), $).
+* **Entrada:** cadena de tokens (`id`, `+`, `*`, `(`, `)`, `$`)
+* **Pila:** contiene símbolos terminales y no terminales
+* **Operaciones:**
 
-Pila: contiene símbolos terminales y no terminales.
+  * **SHIFT:** mueve el siguiente token de la entrada a la pila
+  * **REDUCE:** sustituye una secuencia de símbolos de la pila por un no terminal según las producciones
 
-Operaciones:
+### **Reglas de reducción**
 
-SHIFT: mueve el siguiente token de la entrada a la pila.
-
-REDUCE: sustituye una secuencia de símbolos de la pila por un no terminal, según las producciones.
-
-Reglas de reducción:
+```
 (E)     → F
 id      → F
 T * F   → T
 E + T   → E
 F       → T
 T       → E
+```
 
-Estrategia:
+### **Estrategia**
 
 El analizador examina la pila y el token siguiente (lookahead).
-
 Aplica reducciones solo cuando no haya un operador de mayor precedencia pendiente.
+Acepta si al final la pila contiene únicamente `E`.
 
-Acepta si al final la pila contiene únicamente E.
+---
 
-5. Implementación en Python
+## **5. Implementación en Python**
 
-El código del analizador se encuentra en parser_asc.py.
+El código del analizador se encuentra en `parser_asc.py`.
 Implementa el proceso de tokenización, análisis con pila y reducción controlada por precedencia.
 
+```python
 # parser_asc.py (fragmento resumido)
 TOK_ID, TOK_PLUS, TOK_MUL, TOK_LP, TOK_RP, TOK_EOF = 'id', '+', '*', '(', ')', '$'
 
 def tokenize(src): ...
 def try_reduce(stack, lookahead): ...
 def parse_expression(expr, debug=False): ...
+```
 
+El programa lee expresiones desde consola y devuelve `ACEPTA` o `RECHAZA`.
 
-El programa lee expresiones desde consola y devuelve ACEPTA o RECHAZA.
+---
 
-6. Pruebas de funcionamiento
+## **6. Pruebas de funcionamiento**
 
-Puedes ingresar todas las pruebas a la vez creando un archivo tests.txt con el siguiente contenido:
+Puedes ingresar todas las pruebas a la vez creando un archivo `tests.txt` con el siguiente contenido:
 
+```
 id
 id+id
 id*id
@@ -218,13 +254,19 @@ id*
 (id+id
 id)
 ((id+id)
+```
 
+Ejecutar:
 
-Y ejecutando:
-
+```bash
 python parser_asc.py < tests.txt
+```
 
-Casos válidos
+---
+
+### **Casos válidos**
+
+```
 expr> id
 ACEPTA
 expr> id+id
@@ -241,8 +283,11 @@ expr> id*(id+id)*id
 ACEPTA
 expr> (id+id+id)*(id*id)
 ACEPTA
+```
 
-Casos inválidos
+### **Casos inválidos**
+
+```
 expr> +id
 RECHAZA
 expr> id+
@@ -257,44 +302,64 @@ expr> id)
 RECHAZA
 expr> ((id+id)
 RECHAZA
+```
 
+---
 
+## **7. Conclusión**
 
-Comparación de Algoritmos de Análisis Sintáctico: CYK vs Predictivo
-1. Introducción
+El analizador ascendente implementado:
+
+* Reconoce correctamente las expresiones definidas por la gramática original
+* Controla la precedencia entre `+` y `*` y el uso de paréntesis
+* Rechaza expresiones sintácticamente incorrectas
+* Demuestra la aplicación completa del proceso: transformación LL(1), conjuntos FIRST/FOLLOW y diseño de parser ascendente con pila
+
+---
+
+# **Punto 4 — Comparación de Algoritmos de Análisis Sintáctico: CYK vs Predictivo**
+
+---
+
+## **1. Introducción**
+
 Este proyecto compara dos algoritmos de análisis sintáctico:
 
-Parser CYK: Algoritmo ascendente que usa programación dinámica. Complejidad O(n³).
+* **Parser CYK:** Algoritmo ascendente que usa programación dinámica. Complejidad O(n³).
+* **Parser Predictivo:** Algoritmo descendente recursivo. Complejidad O(n).
 
-Parser Predictivo: Algoritmo descendente recursivo. Complejidad O(n).
+**Diferencias principales:**
 
-Diferencias principales:
+* CYK es más general (maneja cualquier gramática libre de contexto).
+* Predictivo es más rápido pero solo funciona con gramáticas LL(1).
+* CYK usa una tabla n×n, mientras que el Predictivo usa recursión directa.
 
-CYK es más general (maneja cualquier gramática libre de contexto)
+---
 
-Predictivo es más rápido pero solo funciona con gramáticas LL(1)
+## **2. Ejecución**
 
-CYK usa tabla n×n, Predictivo usa recursión directa
+**Requisitos:** Python 3.6+
 
-2. Ejecución
-Requisitos: Python 3.6+
+**Pasos:**
 
-Pasos:
+1. Colocar los tres archivos en la misma carpeta:
 
-Colocar los 3 archivos en la misma carpeta:
+   * `cyk_parser.py`
+   * `predictive_parser.py`
+   * `comparison.py`
+2. Ejecutar:
 
-cyk_parser.py
+   ```bash
+   python comparison.py
+   ```
 
-predictive_parser.py
+El programa mostrará automáticamente las comparaciones de corrección y rendimiento.
 
-comparison.py
+---
 
-Ejecutar: python comparison.py
+## **3. Resultados de la comparación**
 
-El programa mostrará automáticamente las comparaciones de corrección y rendimiento
-
-3. Resultados de la Comparación
-text
+```
 ==================================================
 Verificación de corrección:
 id                   | CYK:   0    | Predictivo:   1
@@ -322,48 +387,68 @@ ANÁLISIS ESTADÍSTICO:
 Tiempo promedio CYK: 0.0062 ms
 Tiempo promedio Predictivo: 0.0011 ms
 Speedup promedio: 5.85x
-4. Conclusión
-El parser predictivo es aproximadamente 6 veces más rápido en promedio que CYK para esta gramática, demostrando la ventaja de los algoritmos descendentes especializados sobre los métodos generales ascendentes.
+```
 
+---
 
+## **4. Conclusión**
 
+El parser predictivo es aproximadamente seis veces más rápido en promedio que CYK para esta gramática, demostrando la ventaja de los algoritmos descendentes especializados sobre los métodos generales ascendentes.
 
+---
 
+# **Punto 5 — Algoritmo de Emparejamiento para Parser Descendente Recursivo**
 
-Punto 5 - Algoritmo de Emparejamiento para Parser Descendente Recursivo
-Descripción
-Implementación de un parser predictivo descendente recursivo que utiliza un algoritmo de emparejamiento para verificar tokens en el análisis sintáctico.
+---
 
-Características
-Parser predictivo descendente recursivo
+## **1. Descripción**
 
-Algoritmo de emparejamiento integrado
+Implementación de un parser predictivo descendente recursivo que utiliza un **algoritmo de emparejamiento** para verificar tokens en el análisis sintáctico.
 
-Entrada interactiva desde consola
+---
 
-Gramática de expresiones aritméticas
+## **2. Características**
 
-Gramática Implementada
-text
+* Parser predictivo descendente recursivo
+* Algoritmo de emparejamiento integrado
+* Entrada interactiva desde consola
+* Gramática de expresiones aritméticas
+
+---
+
+## **3. Gramática implementada**
+
+```
 E  → T E'
 E' → + T E' | ε
 T  → F T' 
 T' → * F T' | ε
 F  → ( E ) | id
-Uso del Algoritmo de Emparejamiento
-El algoritmo match() es fundamental y se usa en:
+```
 
-parse_E_prime() → Empareja el token '+'
+---
 
-parse_T_prime() → Empareja el token '*'
+## **4. Uso del algoritmo de emparejamiento**
 
-parse_F() → Empareja tokens '(', ')' e 'id'
+El algoritmo `match()` es fundamental y se usa en:
 
-Ejecución
-bash
+* `parse_E_prime()` → Empareja el token `+`
+* `parse_T_prime()` → Empareja el token `*`
+* `parse_F()` → Empareja tokens `(`, `)` e `id`
+
+---
+
+## **5. Ejecución**
+
+```bash
 python parser.py
-Ejemplo de Uso
-text
+```
+
+---
+
+## **6. Ejemplo de uso**
+
+```
 === Parser Predictivo con Algoritmo de Emparejamiento ===
 Gramática: E → E + T | T, T → T * F | F, F → (E) | id
 Solo se acepta el literal 'id' como operando.
@@ -381,6 +466,14 @@ expr> (id+id)*id
 ACEPTA
 expr> id+
 RECHAZA
-Archivo
-parser.py -
+```
+
+---
+
+## **7. Archivos incluidos**
+
+* `parser.py`: implementación del parser predictivo con algoritmo de emparejamiento
+
+---
+
 
