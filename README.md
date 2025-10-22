@@ -48,7 +48,7 @@ SALIR
 
 ## **3. Casos de prueba sugeridos**
 
-Ingresar los siguientes comandos en la consola del programa (sin incluir `SQL>`):
+Ingresar los siguientes comandos en la consola del programa :
 
 ```sql
 CREATE TABLE users (id, name, age);
@@ -74,7 +74,7 @@ Cada instrucción produce un árbol sintáctico que demuestra que la gramática 
 
 ## **5. Resultado final**
 
-El proyecto permite ejecutar sentencias CRUD y visualizar su análisis sintáctico en formato textual y gráfico, cumpliendo con los requerimientos del Punto 2 del parcial.
+El proyecto permite ejecutar sentencias CRUD y visualizar su análisis sintáctico en formato textual y gráfico.
 
 ---
 
